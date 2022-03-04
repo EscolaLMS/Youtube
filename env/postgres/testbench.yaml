@@ -1,0 +1,13 @@
+env:
+  - DB_CONNECTION=pgsql
+  - DB_HOST=postgres
+  - DB_PORT=5432
+  - DB_DATABASE=test
+  - DB_USERNAME=postgres
+  - DB_PASSWORD=postgres
+
+providers:
+  - Laravel\Passport\PassportServiceProvider
+  - Spatie\Permission\PermissionServiceProvider
+  - EscolaLms\Youtube\EscolaLmsYoutubeServiceProvider
+  - EscolaLms\Settings\EscolaLmsSettingsServiceProvider
