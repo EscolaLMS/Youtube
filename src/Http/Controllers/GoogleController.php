@@ -14,9 +14,11 @@ class GoogleController extends EscolaLmsBaseController
     private AuthServiceContract $authServiceContract;
 
     public function __construct(
-        AuthServiceContract $authServiceContract
+        AuthServiceContract $authServiceContract,
+        YoutubeServiceContract $youtubeServiceContract
     ) {
         $this->authServiceContract = $authServiceContract;
+        $this->youtubeServiceContract = $youtubeServiceContract;
     }
 
     public function generateUrl(GoogleGenerateUrlRequest $generateUrlRequest)

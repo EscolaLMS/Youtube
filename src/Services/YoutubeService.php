@@ -3,7 +3,6 @@
 namespace EscolaLms\Youtube\Services;
 
 use EscolaLms\Settings\Facades\AdministrableConfig;
-use EscolaLms\Settings\Models\Config;
 use EscolaLms\Youtube\Dto\YTBroadcastDto;
 use EscolaLms\Youtube\Dto\YTLiveDto;
 use EscolaLms\Youtube\Services\Contracts\AuthenticateServiceContract;
@@ -32,10 +31,12 @@ class YoutubeService implements YoutubeServiceContract
     public function setRefreshToken($code)
     {
         $token = $this->authenticateServiceContract->getToken($code);
-        AdministrableConfig::setConfig([
-            'services.youtube.refresh_token' => $token['refresh_token'],
-        ]);
-        AdministrableConfig::storeConfig();
+        if (isset($token['refresh_token'])) {
+            AdministrableConfig::setConfig([
+                'services.youtube.refresh_token' => $token['refresh_token'],
+            ]);
+            AdministrableConfig::storeConfig();
+        }
     }
 
 }

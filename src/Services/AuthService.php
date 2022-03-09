@@ -77,8 +77,8 @@ class AuthService implements AuthServiceContract
 			}
 
 			$this->client->setLoginHint($youtube_email);
-			$authUrl = $this->client->createAuthUrl();
-			return $authUrl;
+            $authUrl = $this->client->createAuthUrl();
+            return $authUrl;
 
 		} catch (\Google_Service_Exception $e) {
 

@@ -7,7 +7,6 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use EscolaLms\Settings\EscolaLmsSettingsServiceProvider;
 use EscolaLms\Auth\Models\User;
 use EscolaLms\Core\Tests\TestCase as CoreTestCase;
-// use GuzzleHttp\Client;
 
 
 class TestCase extends CoreTestCase

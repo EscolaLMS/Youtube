@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit backupGlobals="false" backupStaticAttributes="false" bootstrap="vendor/autoload.php" colors="true" convertErrorsToExceptions="true" convertNoticesToExceptions="true" convertWarningsToExceptions="true" processIsolation="false" stopOnFailure="false">
-    <testsuite name="Escola LMS Jitsi">
+    <testsuite name="Escola LMS Youtube">
         <directory suffix="Test.php">./tests</directory>
     </testsuite>
     <php>
@@ -13,4 +13,12 @@
         <env name="DB_USERNAME" value="default"/>
         <env name="DB_PASSWORD" value="secret"/>
     </php>
+    <filter>
+      <whitelist processUncoveredFilesFromWhitelist="true">
+        <directory suffix=".php">./src</directory>
+        <exclude>
+          <file>./src/routes.php</file>
+        </exclude>
+      </whitelist>
+    </filter>
 </phpunit>
