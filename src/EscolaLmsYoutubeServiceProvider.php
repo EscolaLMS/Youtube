@@ -2,6 +2,8 @@
 
 namespace EscolaLms\Youtube;
 
+use EscolaLms\Auth\Providers\SettingsServiceProvider;
+use EscolaLms\Settings\Facades\AdministrableConfig;
 use EscolaLms\Youtube\Services\AuthenticateService;
 use EscolaLms\Youtube\Services\AuthService;
 use EscolaLms\Youtube\Services\ChannelService;
@@ -47,5 +49,8 @@ class EscolaLmsYoutubeServiceProvider extends ServiceProvider
             __DIR__ . '/../config/youtube.php',
             'youtube'
         );
+
+        $this->app->register(SettingsServiceProvider::class);
+        AdministrableConfig::registerConfig('services.youtube.refresh_token', ['nullable', 'string'], false);
     }
 }

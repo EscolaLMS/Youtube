@@ -20,14 +20,8 @@ class AuthenticateService extends AuthService implements AuthenticateServiceCont
 		$this->googleYoutubeLiveBroadcast = new \Google_Service_YouTube_LiveBroadcast;
 	}
 
-	public function authChannelWithCode($code) {
+	public function authChannelWithCode($token) {
 		$authResponse = [];
-        $token = $code;
-//		$token = $this->getToken($code);
-//		if (!$token) {
-//			$authResponse['error'] = 'invalid token';
-//			return $authResponse;
-//		}
 		$authResponse['token'] = $token;
 		$this->setAccessToken($authResponse['token']);
 		$authResponse['channel_details'] = $this->channelDetails();

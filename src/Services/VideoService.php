@@ -21,13 +21,6 @@ class VideoService extends AuthService implements VideoServiceContract
 
 			$service = new \Google_Service_YouTube($this->client);
 			return $service->videos->listVideos($part, $params);
-
-		} catch (\Google_Service_Exception $e) {
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (\Google_Exception $e) {
-			throw new Exception($e->getMessage(), 1);
-
 		} catch (Exception $e) {
 			throw new Exception($e->getMessage(), 1);
 		}
@@ -46,13 +39,6 @@ class VideoService extends AuthService implements VideoServiceContract
 
 			$service = new \Google_Service_YouTube($this->client);
 			return $service->search->listSearch($part, $params);
-
-		} catch (\Google_Service_Exception $e) {
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (\Google_Exception $e) {
-			throw new Exception($e->getMessage(), 1);
-
 		} catch (Exception $e) {
 			throw new Exception($e->getMessage(), 1);
 		}
@@ -71,13 +57,6 @@ class VideoService extends AuthService implements VideoServiceContract
 
 			$service = new \Google_Service_YouTube($this->client);
 			return $service->search->listSearch($part, $params);
-
-		} catch (\Google_Service_Exception $e) {
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (\Google_Exception $e) {
-			throw new Exception($e->getMessage(), 1);
-
 		} catch (Exception $e) {
 			throw new Exception($e->getMessage(), 1);
 		}

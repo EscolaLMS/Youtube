@@ -15,6 +15,7 @@ class AddCcolumnsYTForWebinarTable extends Migration
     {
         if (Schema::hasTable('webinars')) {
             Schema::table('webinars', function (Blueprint $table) {
+                $table->string('yt_id', 30)->nullable();
                 $table->string('yt_url', 255)->nullable();
                 $table->string('yt_stream_url', 255)->nullable();
                 $table->string('yt_stream_key', 255)->nullable();
@@ -31,7 +32,7 @@ class AddCcolumnsYTForWebinarTable extends Migration
     {
         if (Schema::hasTable('webinars')) {
             Schema::table('webinars', function (Blueprint $table) {
-                $table->dropColumn(['yt_url', 'yt_stream_url', 'yt_stream_key']);
+                $table->dropColumn(['yt_url', 'yt_stream_url', 'yt_stream_key', 'yt_id']);
             });
         }
     }

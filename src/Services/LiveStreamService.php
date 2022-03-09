@@ -3,10 +3,13 @@
 namespace EscolaLms\Youtube\Services;
 
 use Carbon\Carbon;
+use EscolaLms\Youtube\Dto\YTBroadcastDto;
 use EscolaLms\Youtube\Dto\YTLiveDto;
 use EscolaLms\Youtube\Dto\YTStreamDto;
+use EscolaLms\Youtube\Dto\YTUpdateResponseDto;
 use EscolaLms\Youtube\Services\Contracts\LiveStreamServiceContract;
 use Exception;
+use Google\Service\YouTube\VideoSnippet;
 
 /**
  *  Api Service For Youtube Live Events
@@ -40,54 +43,66 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 * @param  [type] $data  [array of the event details]
 	 * @return [type]        [response array of broadcast ]
 	 */
-	public function broadcast($token, $data = null)
+	public function broadcast($token, YTBroadcastDto $YTBroadcastDto): ?YTLiveDto
     {
   		try {
-			if (count($data) < 1 || empty($data) || !isset($data['title']) || !isset($data['description'])) {
-				return false;
+			if (!$YTBroadcastDto->getTitle() || !$YTBroadcastDto->getDescription()) {
+				return null;
 			}
 			/**
 			 * [setAccessToken [setting accent token to client]]
 			 */
 			$setAccessToken = $this->setAccessToken($token);
 			if (!$setAccessToken) {
-				return false;
+				return null;
 			}
 			/**
 			 * [$service [instance of Google_Service_YouTube ]]
 			 * @var [type]
 			 */
 			$youtube = new \Google_Service_YouTube($this->client);
-
-			$title = $data["title"];
-			$description = $data["description"];
-			$thumbnail_path = isset($data["thumbnail_path"]) ? $data["thumbnail_path"] : null;
-			$startdt = Carbon::createFromFormat('Y-m-d H:i:s', $data["event_start_date_time"], $data["time_zone"]);
-			$startdt = ($startdt < Carbon::now($data["time_zone"])) ? Carbon::now($data["time_zone"]) : $startdt;
+			$startdt = Carbon::createFromFormat(
+                'Y-m-d H:i:s',
+                $YTBroadcastDto->getEventStartDateTime(),
+                $YTBroadcastDto->getTimeZone()
+            );
+            $now = Carbon::now($YTBroadcastDto->getTimeZone());
+			$startdt = ($startdt < $now) ? $now : $startdt;
 			$startdtIso = $startdt->toIso8601String();
-			if (count($data["tag_array"]) > 0) {
-				$tags = substr(str_replace(", ,", ",", implode(',', $data["tag_array"])), 0, 498);
-				$tags = (substr($tags, -1) == ',') ? substr($tags, 0, -1) : $tags;
-				$data["tag_array"] = explode(',', $tags);
-			} else {
-				$data["tag_array"] = [];
+            if ($YTBroadcastDto->getEventEndDateTime()) {
+                $enddt = Carbon::createFromFormat(
+                    'Y-m-d H:i:s',
+                    $YTBroadcastDto->getEventEndDateTime(),
+                    $YTBroadcastDto->getTimeZone()
+                );
+                $enddt = ($enddt < $now) ? $now : $enddt;
+                $enddtIso = $enddt->toIso8601String();
+            }
+			if (count($YTBroadcastDto->getTagArray()) > 0) {
+				$tags = substr(
+                    str_replace(
+                    ", ,",
+                    ",", implode(',', $YTBroadcastDto->getTagArray())
+                    ),
+                    0,
+                    498);
+				$tags = (substr($tags, -1) === ',') ? substr($tags, 0, -1) : $tags;
+                $YTBroadcastDto->setTagArray(explode(',', $tags));
 			}
-
-			$privacy_status = isset($data['privacy_status']) ? $data['privacy_status'] : "public";
-			$language = isset($data["language_name"]) ? $data["language_name"] : 'English';
-
+			$language = $YTBroadcastDto->getLanguageName();
 			/**
 			 * Create an object for the liveBroadcast resource [specify snippet's title, scheduled start time, and scheduled end time]
 			 */
-			$this->googleLiveBroadcastSnippet->setTitle($title);
-			$this->googleLiveBroadcastSnippet->setDescription($description);
+			$this->googleLiveBroadcastSnippet->setTitle($YTBroadcastDto->getTitle());
+			$this->googleLiveBroadcastSnippet->setDescription($YTBroadcastDto->getDescription());
 			$this->googleLiveBroadcastSnippet->setScheduledStartTime($startdtIso);
-
+            if ($YTBroadcastDto->getEventEndDateTime()) {
+                $this->googleLiveBroadcastSnippet->setScheduledEndTime($enddtIso);
+            }
 			/**
 			 * object for the liveBroadcast resource's status ["private, public or unlisted"]
 			 */
-			$this->googleLiveBroadcastStatus->setPrivacyStatus($privacy_status);
-
+			$this->googleLiveBroadcastStatus->setPrivacyStatus($YTBroadcastDto->getPrivacyStatus());
 			/**
 			 * API Request [inserts the liveBroadcast resource]
 			 */
@@ -97,60 +112,73 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 			/**
 			 * Execute Insert LiveBroadcast Resource Api [return an object that contains information about the new broadcast]
 			 */
-			$broadcastsResponse = $youtube->liveBroadcasts->insert('snippet,status', $this->googleYoutubeLiveBroadcast, array());
+			$broadcastsResponse = $youtube->liveBroadcasts->insert('snippet,status', $this->googleYoutubeLiveBroadcast, []);
 			$youtubeEventId = $broadcastsResponse['id'];
-
 			/**
 			 * set thumbnail to the event
 			 */
-			if (!is_null($thumbnail_path)) {
-				$thumb = $this->uploadThumbnail($thumbnail_path, $youtubeEventId);
+			if (!is_null($YTBroadcastDto->getThumbnailPath())) {
+				$thumb = $this->uploadThumbnail($YTBroadcastDto->getThumbnailPath(), $youtubeEventId);
 			}
+
+			/**
+			 * Call the API's videos.list method to retrieve the video resource.
+			 */
+			$listResponse = $youtube->videos->listVideos("snippet", array('id' => $youtubeEventId));
+			$video = $listResponse[0];
+			/**
+			 * update the tags and language via video resource
+			 */
+			$videoSnippet = $video['snippet'];
+            /* @var $videoSnippet VideoSnippet */
+			$videoSnippet->setTags($YTBroadcastDto->getTagArray());
+			if (!is_null($language)) {
+				$temp = isset($this->ytLanguage[$language]) ? $this->ytLanguage[$language] : "en";
+				$videoSnippet->setDefaultAudioLanguage($temp);
+				$videoSnippet->setDefaultLanguage($temp);
+			}
+			$video['snippet'] = $videoSnippet;
+			/**
+			 * Update video resource [videos.update() method.]
+			 */
+			$updateResponse = $youtube->videos->update("snippet", $video);
+			$YTUpdateResponseDto = new YTUpdateResponseDto($updateResponse);
 			/**
 			 * object of livestream resource [snippet][title]
 			 */
-			$this->googleYoutubeLiveStreamSnippet->setTitle($title);
-
+			$this->googleYoutubeLiveStreamSnippet->setTitle($YTBroadcastDto->getTitle());
 			/**
 			 * object for content distribution  [stream's format,ingestion type.]
 			 */
             $this->googleYoutubeCdnSettings->setResolution("variable");
             $this->googleYoutubeCdnSettings->setFrameRate("variable");
 			$this->googleYoutubeCdnSettings->setIngestionType('rtmp');
-
 			/**
 			 * API request [inserts liveStream resource.]
 			 */
 			$this->googleYoutubeLiveStream->setSnippet($this->googleYoutubeLiveStreamSnippet);
 			$this->googleYoutubeLiveStream->setCdn($this->googleYoutubeCdnSettings);
 			$this->googleYoutubeLiveStream->setKind('youtube#liveStream');
-
 			/**
 			 * execute the insert request [return an object that contains information about new stream]
 			 */
-			$streamsResponse = $youtube->liveStreams->insert('snippet,cdn', $this->googleYoutubeLiveStream, array());
+			$streamsResponse = $youtube->liveStreams->insert('snippet,cdn', $this->googleYoutubeLiveStream, []);
 			$ytStreamDto = new YTStreamDto($streamsResponse);
 			/**
 			 * Bind the broadcast to the live stream
 			 */
 			$bindBroadcastResponse = $youtube->liveBroadcasts->bind(
 				$broadcastsResponse['id'], 'id,contentDetails',
-				array(
-					'streamId' => $streamsResponse['id'],
-				));
-
+				[
+                    'streamId' => $streamsResponse['id'],
+                ]);
 			$YTLiveDto = new YTLiveDto($bindBroadcastResponse);
             $YTLiveDto->setYTStreamDto($ytStreamDto);
+            $YTLiveDto->setYTUpdateResponseDto($YTUpdateResponseDto);
 			return $YTLiveDto;
-
-		} catch (\Google_Service_Exception $e) {
-			throw new Exception($e->getMessage(), 1);
-		} catch (\Google_Exception $e) {
-			throw new Exception($e->getMessage(), 1);
 		} catch (Exception $e) {
 			throw new Exception($e->getMessage(), 1);
 		}
-
 	}
 
 	/**
@@ -159,7 +187,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 * @param  [type] $videoId [eventId]
 	 * @return [type]          [thumbnail url]
 	 */
-	public function uploadThumbnail($url = '', $videoId) {
+	public function uploadThumbnail(string $url, $videoId) {
 		if ($this->client->getAccessToken()) {
 			try {
 				/**
@@ -213,7 +241,6 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 				$this->client->setDefer(false);
 				$thumbnailUrl = $status['items'][0]['default']['url'];
 				return $thumbnailUrl;
-
 			} catch (\Google_Exception $e) {
 
 				throw new Exception($e->getMessage(), 1);
@@ -229,30 +256,25 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	public function updateTags($videoId, $tagsArray = []) {
 		if ($this->client->getAccessToken()) {
 			try {
-
 				/**
 				 * [$service [instance of Google_Service_YouTube ]]
 				 * @var [type]
 				 */
 				$youtube = new \Google_Service_YouTube($this->client);
 				$videoId = $videoId;
-
 				/**
 				 * [$listResponse videos.list method to retrieve the video resource.]
 				 */
 				$listResponse = $youtube->videos->listVideos("snippet",
 					array('id' => $videoId));
 				$video = $listResponse[0];
-
 				$videoSnippet = $video['snippet'];
-				$videoSnippet['tags'] = $data["tag_array"];
+				$videoSnippet['tags'] = $tagsArray["tag_array"];
 				$video['snippet'] = $videoSnippet;
-
 				/**
 				 * [$updateResponse calling the videos.update() method.]
 				 */
 				$updateResponse = $youtube->videos->update("snippet", $video);
-
 			} catch (\Google_Exception $e) {
 				throw new Exception($e->getMessage(), 1);
 			}
@@ -268,11 +290,9 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 */
 	public function transitionEvent($token, $youtubeEventId, $broadcastStatus) {
 		try {
-
 			if (!empty($token)) {
 				return false;
 			}
-
 			/**
 			 * [setAccessToken [setting accent token to client]]
 			 */
@@ -290,13 +310,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 			$liveBroadcasts = $youtube->liveBroadcasts;
 			$transition = $liveBroadcasts->transition($broadcastStatus, $youtubeEventId, $part);
 			return $transition;
-
-		} catch (\Google_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
 		} catch (Exception $e) {
-
 			throw new Exception($e->getMessage(), 1);
 		}
 	}
@@ -308,69 +322,65 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 * @param  [type] $youtubeEventId [eventID]
 	 * @return [type]                   [response array for various process in the update]
 	 */
-	public function updateBroadcast($token, $data, $youtubeEventId) {
+	public function updateBroadcast($token, YTBroadcastDto $YTBroadcastDto, $youtubeEventId): ?YTLiveDto
+    {
 		try {
 			/**
 			 * [setAccessToken [setting accent token to client]]
 			 */
 			$setAccessToken = $this->setAccessToken($token);
 			if (!$setAccessToken) {
-				return false;
+				return null;
 			}
-
 			/**
 			 * [$service [instance of Google_Service_YouTube ]]
 			 * @var [type]
 			 */
 			$youtube = new \Google_Service_YouTube($this->client);
-
-			if (count($data) < 1 || empty($data)) {
-				return false;
-			}
-
-			$title = $data["title"];
-			$description = $data['description'];
-			$thumbnail_path = isset($data['thumbnail_path']) ? $data['thumbnail_path'] : null;
-
 			/**
 			 *  parsing event start date
 			 */
-			$startdt = Carbon::createFromFormat('Y-m-d H:i:s', $data['event_start_date_time'], $data['time_zone']);
-			$startdt = ($startdt < Carbon::now($data['time_zone'])) ? Carbon::now($data['time_zone']) : $startdt;
+			$startdt = Carbon::createFromFormat(
+                'Y-m-d H:i:s',
+                $YTBroadcastDto->getEventStartDateTime(),
+                $YTBroadcastDto->getTimeZone()
+            );
+            $now = Carbon::now($YTBroadcastDto->getTimeZone());
+			$startdt = ($startdt < $now) ? $now : $startdt;
 			$startdtIso = $startdt->toIso8601String();
-			$privacy_status = isset($data['privacy_status']) ? $data['privacy_status'] : "public";
-
 			/**
 			 * parsing event end date
 			 */
-			if (isset($data['event_end_date_time'])) {
-				$enddt = Carbon::createFromFormat('Y-m-d H:i:s', $data['event_end_date_time'], $data['time_zone']);
-				$enddt = ($enddt < Carbon::now($data['time_zone'])) ? Carbon::now($data['time_zone']) : $enddt;
+			if ($YTBroadcastDto->getEventStartDateTime()) {
+				$enddt = Carbon::createFromFormat(
+                    'Y-m-d H:i:s',
+                    $YTBroadcastDto->getEventStartDateTime(),
+                    $YTBroadcastDto->getTimeZone()
+                );
+				$enddt = ($enddt < $now) ? $now : $enddt;
 				$enddtIso = $enddt->toIso8601String();
 			}
-
-			$tags = substr(str_replace(", ,", ",", implode(',', $data['tag_array'])), 0, 498);
-			$tags = (substr($tags, -1) == ',') ? substr($tags, 0, -1) : $tags;
-			$data['tag_array'] = explode(',', $tags);
-
-			$language = $data['language_name'];
-
+			$tags = substr(str_replace(
+                ", ,",
+                ",",
+                implode(',', $YTBroadcastDto->getTagArray())
+            ), 0, 498);
+			$tags = (substr($tags, -1) === ',') ? substr($tags, 0, -1) : $tags;
+            $YTBroadcastDto->setTagArray(explode(',', $tags));
+            $language = $YTBroadcastDto->getLanguageName();
 			/**
 			 * Create an object for the liveBroadcast resource's snippet [snippet's title, scheduled start time, and scheduled end time.]
 			 */
-			$this->googleLiveBroadcastSnippet->setTitle($title);
-			$this->googleLiveBroadcastSnippet->setDescription($description);
+			$this->googleLiveBroadcastSnippet->setTitle($YTBroadcastDto->getTitle());
+			$this->googleLiveBroadcastSnippet->setDescription($YTBroadcastDto->getDescription());
 			$this->googleLiveBroadcastSnippet->setScheduledStartTime($startdtIso);
-
-			if (isset($data['event_end_date_time'])) {
+			if ($YTBroadcastDto->getEventStartDateTime()) {
 				$this->googleLiveBroadcastSnippet->setScheduledEndTime($enddtIso);
 			}
-
 			/**
 			 * Create an object for the liveBroadcast resource's status ["private, public or unlisted".]
 			 */
-			$this->googleLiveBroadcastStatus->setPrivacyStatus($privacy_status);
-
+			$this->googleLiveBroadcastStatus->setPrivacyStatus($YTBroadcastDto->getPrivacyStatus());
 			/**
 			 * Create the API request  [inserts the liveBroadcast resource.]
 			 */
@@ -378,97 +388,87 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 			$this->googleYoutubeLiveBroadcast->setStatus($this->googleLiveBroadcastStatus);
 			$this->googleYoutubeLiveBroadcast->setKind('youtube#liveBroadcast');
 			$this->googleYoutubeLiveBroadcast->setId($youtubeEventId);
-
 			/**
 			 * Execute the request [return info about the new broadcast ]
 			 */
-			$broadcastsResponse = $youtube->liveBroadcasts->update('snippet,status',
-				$this->googleYoutubeLiveBroadcast, array());
-
-			/**
-			 * set thumbnail
-			 */
-			if (!is_null($thumbnail_path)) {
-				$thumb = $this->uploadThumbnail($thumbnail_path, $youtubeEventId);
-			}
-
+			$youtube->liveBroadcasts->update('snippet,status', $this->googleYoutubeLiveBroadcast, []);
+//			/**
+//			 * set thumbnail
+//			 */
+//			if (!is_null($YTBroadcastDto->getThumbnailPath())) {
+//				$thumb = $this->uploadThumbnail($YTBroadcastDto->getThumbnailPath(), $youtubeEventId);
+//			}
 			/**
 			 * Call the API's videos.list method [retrieve the video resource]
 			 */
-			$listResponse = $youtube->videos->listVideos("snippet",
-				array('id' => $youtubeEventId));
-			$video = $listResponse[0];
+			$listResponse = $youtube->videos->listVideos("snippet", ['id' => $youtubeEventId]);
+            $video = $listResponse[0];
 			$videoSnippet = $video['snippet'];
-			$videoSnippet['tags'] = $data['tag_array'];
-
-			/**
+            /* @var $videoSnippet VideoSnippet */
+            $videoSnippet->setTags($YTBroadcastDto->getTagArray());
+            /**
 			 * set Language and other details
 			 */
 			if (!is_null($language)) {
-				$temp = isset($this->ytLanguage[$language]) ? $this->ytLanguage[$language] : "en";
-				$videoSnippet['defaultAudioLanguage'] = $temp;
-				$videoSnippet['defaultLanguage'] = $temp;
+				$temp = $this->ytLanguage[$language] ?? "en";
+				$videoSnippet->setDefaultAudioLanguage($temp);
+				$videoSnippet->setDefaultLanguage($temp);
 			}
-
-			$videoSnippet['title'] = $title;
-			$videoSnippet['description'] = $description;
-			$videoSnippet['scheduledStartTime'] = $startdtIso;
+			$videoSnippet->setTitle($YTBroadcastDto->getTitle());
+            /*
+             * Category education from YT
+             {
+                "kind": "youtube#videoCategory",
+                "etag": "yBaNkLx4sX9NcDmFgAmxQcV4Y30",
+                "id": "27",
+                "snippet": {
+                  "title": "Education",
+                  "assignable": true,
+                  "channelId": "UCBR8-60-B28hp2BmDPdntcQ"
+                }
+             }
+            */
+			$videoSnippet->setCategoryId(27);
+			$videoSnippet->setDescription($YTBroadcastDto->getDescription());
+			$videoSnippet->setPublishedAt($startdtIso);
 			$video['snippet'] = $videoSnippet;
-
 			/**
 			 * Update the video resource  [call videos.update() method]
 			 */
 			$updateResponse = $youtube->videos->update("snippet", $video);
-
-			$response['broadcast_response'] = $updateResponse;
-
-			$youtubeEventId = $updateResponse['id'];
-
-			$this->googleYoutubeLiveStreamSnippet->setTitle($title);
-
+			$YTUpdateResponseDto = new YTUpdateResponseDto($updateResponse);
+			$this->googleYoutubeLiveStreamSnippet->setTitle($YTBroadcastDto->getTitle());
 			/**
 			 * object for content distribution  [stream's format,ingestion type.]
 			 */
-
-			$this->googleYoutubeCdnSettings->setFormat("720p");
-			$this->googleYoutubeCdnSettings->setIngestionType('rtmp');
-
+            $this->googleYoutubeCdnSettings->setResolution("variable");
+            $this->googleYoutubeCdnSettings->setFrameRate("variable");
+            $this->googleYoutubeCdnSettings->setIngestionType('rtmp');
 			/**
 			 * API request [inserts liveStream resource.]
 			 */
 			$this->googleYoutubeLiveStream->setSnippet($this->googleYoutubeLiveStreamSnippet);
 			$this->googleYoutubeLiveStream->setCdn($this->googleYoutubeCdnSettings);
 			$this->googleYoutubeLiveStream->setKind('youtube#liveStream');
-
 			/**
 			 * execute the insert request [return an object that contains information about new stream]
 			 */
 			$streamsResponse = $youtube->liveStreams->insert('snippet,cdn', $this->googleYoutubeLiveStream, array());
-			$response['stream_response'] = $streamsResponse;
-
+            $ytStreamDto = new YTStreamDto($streamsResponse);
 			/**
 			 * Bind the broadcast to the live stream
 			 */
 			$bindBroadcastResponse = $youtube->liveBroadcasts->bind(
 				$updateResponse['id'], 'id,contentDetails',
-				array(
-					'streamId' => $streamsResponse['id'],
-				));
+				[
+                    'streamId' => $streamsResponse['id'],
+                ]);
+            $YTLiveDto = new YTLiveDto($bindBroadcastResponse);
+            $YTLiveDto->setYTStreamDto($ytStreamDto);
+            $YTLiveDto->setYTUpdateResponseDto($YTUpdateResponseDto);
 
-			$response['bind_broadcast_response'] = $bindBroadcastResponse;
-
-			return $response;
-
-		} catch (\Google_Service_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (\Google_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
+			return $YTLiveDto;
 		} catch (Exception $e) {
-
 			throw new Exception($e->getMessage(), 1);
 		}
 
@@ -489,26 +489,14 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 			if (!$setAccessToken) {
 				return false;
 			}
-
 			/**
 			 * [$service [instance of Google_Service_YouTube ]]
 			 * @var [type]
 			 */
 			$youtube = new \Google_Service_YouTube($this->client);
 			$deleteBroadcastsResponse = $youtube->liveBroadcasts->delete($youtubeEventId);
-
 			return $deleteBroadcastsResponse;
-
-		} catch (\Google_Service_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (\Google_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
 		} catch (Exception $e) {
-
 			throw new Exception($e->getMessage(), 1);
 		}
 	}
