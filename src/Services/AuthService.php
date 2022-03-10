@@ -2,24 +2,27 @@
 
 namespace EscolaLms\Youtube\Services;
 
+use Config;
 use EscolaLms\Youtube\Services\Contracts\AuthServiceContract;
 use Exception;
+use Google_Client;
 
 /**
  *  Api Service For Auth
  */
 class AuthService implements AuthServiceContract
 {
-	protected $client;
-	protected $ytLanguage;
+	protected Google_Client $client;
+	protected ?string $ytLanguage;
 
-	public function __construct() {
-		$this->client = new \Google_Client;
+	public function __construct()
+    {
+		$this->client = new Google_Client;
 
-		$this->client->setClientId(\Config::get('youtube.client_id'));
-		$this->client->setClientSecret(\Config::get('youtube.client_secret'));
-		$this->client->setDeveloperKey(\Config::get('youtube.api_key'));
-		$this->client->setRedirectUri(\Config::get('youtube.redirect_url'));
+		$this->client->setClientId(Config::get('youtube.client_id'));
+		$this->client->setClientSecret(Config::get('youtube.client_secret'));
+		$this->client->setDeveloperKey(Config::get('youtube.api_key'));
+		$this->client->setRedirectUri(Config::get('youtube.redirect_url'));
 
 		$this->client->setScopes([
 			'https://www.googleapis.com/auth/youtube',
@@ -27,11 +30,11 @@ class AuthService implements AuthServiceContract
 
 		$this->client->setAccessType('offline');
 		$this->client->setPrompt('consent');
-		$this->ytLanguage = \Config::get('google.yt_language');
+		$this->ytLanguage = Config::get('google.yt_language');
 
 	}
 
-    public function refreshToken($token)
+    public function refreshToken($token): array
     {
         return $this->client->refreshToken($token);
     }
@@ -41,26 +44,10 @@ class AuthService implements AuthServiceContract
 	 * @param  [type] $code [code for auth]
 	 * @return [type]       [authorization token]
 	 */
-	public function getToken($code) {
-		try {
-
-			$this->client->fetchAccessTokenWithAuthCode($code);
-			$token = $this->client->getAccessToken();
-			return $token;
-
-		} catch (\Google_Service_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (\Google_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
-		}
+	public function getToken($code): array
+    {
+        $this->client->fetchAccessTokenWithAuthCode($code);
+        return $this->client->getAccessToken();
 	}
 
 	/**
@@ -69,64 +56,33 @@ class AuthService implements AuthServiceContract
 	 * @param  [type] $channelId     [return identifier]
 	 * @return [type]                [auth url to generate]
 	 */
-	public function getLoginUrl($youtube_email, $channelId = null) {
-		try
-		{
-			if (!empty($channelId)) {
-				$this->client->setState($channelId);
-			}
+	public function getLoginUrl($youtube_email, $channelId = null): string
+    {
+        if (!empty($channelId)) {
+            $this->client->setState($channelId);
+        }
 
-			$this->client->setLoginHint($youtube_email);
-            $authUrl = $this->client->createAuthUrl();
-            return $authUrl;
-
-		} catch (\Google_Service_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (\Google_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-		}
-
+        $this->client->setLoginHint($youtube_email);
+        return $this->client->createAuthUrl();
 	}
 
 	/**
 	 * [setAccessToken -setting the access token to the client]
-	 * @param [type] $google_token [googel auth token]
+	 * @param [type] $google_token [google auth token]
 	 */
-	public function setAccessToken($google_token = null) {
-		try {
+	public function setAccessToken($google_token = null): bool
+    {
+        if (!is_null($google_token)) {
+            $this->client->setAccessToken($google_token);
+        }
 
-			if (!is_null($google_token)) {
-				$this->client->setAccessToken($google_token);
-			}
-
-			if (!is_null($google_token) && $this->client->isAccessTokenExpired()) {
-				$refreshed_token = $this->client->getRefreshToken();
-				$this->client->fetchAccessTokenWithRefreshToken($refreshed_token);
-				$newToken = $this->client->getAccessToken();
-				$newToken = json_encode($newToken);
-			}
-
-			return !$this->client->isAccessTokenExpired();
-
-		} catch (\Google_Service_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (\Google_Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-
-		} catch (Exception $e) {
-
-			throw new Exception($e->getMessage(), 1);
-		}
+        if (!is_null($google_token) && $this->client->isAccessTokenExpired()) {
+            $refreshed_token = $this->client->getRefreshToken();
+            $this->client->fetchAccessTokenWithRefreshToken($refreshed_token);
+            $newToken = $this->client->getAccessToken();
+            $newToken = json_encode($newToken);
+        }
+        return !$this->client->isAccessTokenExpired();
 	}
 
 	/**
@@ -134,25 +90,20 @@ class AuthService implements AuthServiceContract
 	 * @param  $properties [param properties to be added to channel]
 	 * @return             [resource array]
 	 */
-	public function createResource($properties) {
-		try {
+	public function createResource($properties): array
+    {
+        $resource = [];
+        foreach ($properties as $prop => $value) {
 
-			$resource = array();
-			foreach ($properties as $prop => $value) {
+            if ($value) {
+                /**
+                 * add property to resource
+                 */
+                $this->addPropertyToResource($resource, $prop, $value);
+            }
+        }
 
-				if ($value) {
-					/**
-					 * add property to resource
-					 */
-					$this->addPropertyToResource($resource, $prop, $value);
-				}
-			}
-
-			return $resource;
-
-		} catch (Exception $e) {
-			throw new Exception($e->getMessage(), 1);
-		}
+        return $resource;
 	}
 
 	/**
@@ -160,43 +111,32 @@ class AuthService implements AuthServiceContract
 	 * @param &$ref     [using reference of array from createResource to add property to it]
 	 * @param $property [property to be inserted to resource array]
 	 */
-	public function addPropertyToResource(&$ref, $property, $value) {
-		try {
+	public function addPropertyToResource(&$ref, $property, $value): void
+    {
+        $keys = explode(".", $property);
+        $isArray = false;
+        foreach ($keys as $key) {
+            /**
+             * snippet.tags[]  [convert to snippet.tags]
+             * a boolean variable  [to handle the value like an array]
+             */
+            if (substr($key, -2) === "[]") {
+                $key = substr($key, 0, -2);
+                $isArray = true;
+            }
+            $ref = &$ref[$key];
+        }
 
-			$keys = explode(".", $property);
-			$isArray = false;
-			foreach ($keys as $key) {
-
-				/**
-				 * snippet.tags[]  [convert to snippet.tags]
-				 * a boolean variable  [to handle the value like an array]
-				 */
-				if (substr($key, -2) == "[]") {
-					$key = substr($key, 0, -2);
-					$isArray = true;
-				}
-
-				$ref = &$ref[$key];
-			}
-
-			/**
-			 * Set the property value [ handling the array values]
-			 */
-			if ($isArray && $value) {
-				$ref = explode(",", $value);
-
-			} elseif ($isArray) {
-
-				$ref = array();
-
-			} else {
-
-				$ref = $value;
-			}
-
-		} catch (Exception $e) {
-			throw new Exception($e->getMessage(), 1);
-		}
+        /**
+         * Set the property value [ handling the array values]
+         */
+        if ($isArray && $value) {
+            $ref = explode(",", $value);
+        } elseif ($isArray) {
+            $ref = [];
+        } else {
+            $ref = $value;
+        }
 	}
 
 	/**
@@ -204,7 +144,8 @@ class AuthService implements AuthServiceContract
 	 * @param  $time [youtube returned time format]
 	 * @return       [string parsed time]
 	 */
-	public function parseTime($time) {
+	public function parseTime($time): string
+    {
 		$tempTime = str_replace("PT", " ", $time);
 		$tempTime = str_replace('H', " Hours ", $tempTime);
 		$tempTime = str_replace('M', " Minutes ", $tempTime);
@@ -213,7 +154,7 @@ class AuthService implements AuthServiceContract
 		return $tempTime;
 	}
 
-    public function getClient()
+    public function getClient(): Google_Client
     {
         return $this->client;
     }
