@@ -3,85 +3,54 @@
 namespace EscolaLms\Youtube\Tests\Services;
 
 use EscolaLms\Core\Tests\CreatesUsers;
-use EscolaLms\Jitsi\Services\Contracts\JitsiServiceContract;
 use EscolaLms\Youtube\Services\Contracts\AuthenticateServiceContract;
-use EscolaLms\Youtube\Services\Contracts\LiveStreamServiceContract;
+use EscolaLms\Youtube\Services\Contracts\AuthServiceContract;
 use EscolaLms\Youtube\Tests\TestCase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Testing\Fluent\AssertableJson;
 
 class ServiceTest extends TestCase
 {
-
     use CreatesUsers;
+    use WithFaker;
 
     private $user;
 
     public function setUp(): void
     {
         parent::setUp();
-        $this->user = $this->makeStudent();
+        $this->user = $this->makeAdmin();
+        $this->mock->reset();
     }
 
-    private function decodeJWT($token)
+    public function testGenerateYTAuthUrl()
     {
-        return (json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $token)[1])))));
+        $googleClient = $this->mock(AuthServiceContract::class);
+        $googleClient->shouldReceive('getLoginUrl')->once()->andReturn('https://accounts.google.com/o/');
+
+        $this->response = $this->actingAs($this->user, 'api')->json(
+            'POST',
+            'api/admin/g-token/generate',
+            ['email' => $this->faker->email]
+        );
+        $this->response->assertOk();
+        $this->response->assertJson(fn (AssertableJson $json) => $json->has('url')->etc());
+        $content = json_decode($this->response->content());
+        $this->assertTrue((bool)preg_match('/https:\/\/accounts.google.com.*/', $content->url));
     }
 
-    public function testYT()
+    public function testSetRefreshToken()
     {
-        // mb2w-e1tv-ezs5-0uvb-5655 -> yt key transmition
-//        $jitsiService = app(JitsiServiceContract::class);
-//        dd($jitsiService);
-
-        $authObject = app(AuthenticateServiceContract::class);
-//        dd($authObject->getLoginUrl('hubert.krzysztofiak@escolasoft.com'));
-        $code = '4/0AX4XfWhUBHltLpnHORNd-UUF30yO6rDhga5d2R-pBhmQXhgkxthN8wV87Cgs8Uc5g2EJcQ';
-//        dd($authObject->getToken($code));
-        $token = $authObject->refreshToken(config('youtube.refresh_token'));
-////        dd($authObject->authChannelWithCode($token));
-        $data = [
-            "title" => "Test - " . now()->format('Y-m-d H:i:s'),
-            "description" => "Test",			// Optional
-            "event_start_date_time" => now()->format('Y-m-d H:i:s'),
-            "event_end_date_time" => "",			// Optional
-            "time_zone" => 'UTC',
-            'privacy_status' => "public",				// default: "public" OR "private"
-            "language_name" => "English",				// default: "English"
-            "tag_array" => []				// Optional and should not be more than 500 characters
+        $token = [
+            'refresh_token' => 'test'
         ];
-        $ytEventObj = app(LiveStreamServiceContract::class);
-        $response = $ytEventObj->broadcast($token, $data);
-
-        dd($response);
-    }
-
-
-    public function testServiceWithJwtAndSettings()
-    {
-        // public function getChannelData(User $user, string $channelDisplayName, bool $isModerator = false, array $configOverwrite = [], $interfaceConfigOverwrite = []): array
-
-        $config = config("jitsi");
-        $data = Jitsi::getChannelData($this->user, "Test Channel Name", true, ['foo' => 'bar'], ['bar' => 'foo']);
-
-        $jwt = $this->decodeJWT($data['data']['jwt']);
-
-        $this->assertEquals($data['data']['domain'], $config['host']);
-        $this->assertEquals($data['data']['userInfo']['email'], $this->user->email);
-        $this->assertEquals($jwt->user->email, $this->user->email);
-        $this->assertEquals($jwt->user->moderator, true);
-        $this->assertEquals($data['data']['configOverwrite'], ["foo" => "bar"]);
-        $this->assertEquals($data['data']['interfaceConfigOverwrite'], ["bar" => "foo"]);
-    }
-
-    public function testDisabledServiceWithJwt()
-    {
-        // public function getChannelData(User $user, string $channelDisplayName, bool $isModerator = false, array $configOverwrite = [], $interfaceConfigOverwrite = []): array
-
-        //$config = config("jitsi");
-
-        config(['jitsi.package_status' => PackageStatusEnum::DISABLED]);
-
-
-        $data = Jitsi::getChannelData($this->user, "Test Channel Name");
-        $this->assertTrue(isset($data['error']));
+        $googleClient = $this->mock(AuthenticateServiceContract::class);
+        $googleClient->shouldReceive('getToken')->once()->andReturn($token);
+        $this->response = $this->actingAs($this->user, 'api')->json(
+            'GET',
+            'api/refresh-token?code=' . md5(microtime())
+        );
+        $this->response->assertOk();
+        $this->assertTrue(\Config::get('services.youtube.refresh_token') === $token['refresh_token']);
     }
 }

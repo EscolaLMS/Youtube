@@ -9,6 +9,7 @@ class YTLiveDto
     private string $embedHtml;
     private string $ytUrl;
     private YTStreamDto $YTStreamDto;
+    private YTUpdateResponseDto $YTUpdateResponseDto;
 
     public function __construct(LiveBroadcast $liveBroadcast)
     {
@@ -31,9 +32,19 @@ class YTLiveDto
         return $this->YTStreamDto ?? null;
     }
 
+    public function getYTUpdateResponseDto(): ?YTUpdateResponseDto
+    {
+        return $this->YTUpdateResponseDto ?? null;
+    }
+
     public function setYTStreamDto(YTStreamDto $YTStreamDto): void
     {
         $this->YTStreamDto = $YTStreamDto;
+    }
+
+    public function setYTUpdateResponseDto(YTUpdateResponseDto $YTUpdateResponseDto): void
+    {
+        $this->YTUpdateResponseDto = $YTUpdateResponseDto;
     }
 
     private function setYtUrl(): void

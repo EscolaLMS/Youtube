@@ -5,7 +5,7 @@ namespace EscolaLms\Youtube\Services\Contracts;
 use EscolaLms\Youtube\Dto\YTBroadcastDto;
 use EscolaLms\Youtube\Dto\YTLiveDto;
 
-interface LiveStreamServiceContract
+interface YoutubeServiceContract
 {
-    public function broadcast($token, YTBroadcastDto $ytBroadcastDto): ?YTLiveDto;
+    public function generateYTStream(YTBroadcastDto $YTBroadcastDto): ?YTLiveDto;
 }
