@@ -309,7 +309,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 * @return [type]                   [response array for various process in the update]
 	 */
 	public function updateBroadcast($token, YTBroadcastDto $YTBroadcastDto): ?YTLiveDto
-    {
+  {
         /**
          * [setAccessToken [setting accent token to client]]
          */

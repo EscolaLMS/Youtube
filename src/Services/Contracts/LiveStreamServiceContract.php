@@ -9,6 +9,5 @@ use EscolaLms\Youtube\Dto\YTLiveDto;
 interface LiveStreamServiceContract
 {
     public function broadcast($token, YTBroadcastDto $ytBroadcastDto): ?YTLiveDtoContract;
-
     public function updateBroadcast($token, YTBroadcastDto $YTBroadcastDto): ?YTLiveDto;
 }
