@@ -3,6 +3,7 @@
 namespace EscolaLms\Youtube\Services;
 
 use Carbon\Carbon;
+use EscolaLms\Youtube\Dto\Contracts\YTLiveDtoContract;
 use EscolaLms\Youtube\Dto\YTBroadcastDto;
 use EscolaLms\Youtube\Dto\YTLiveDto;
 use EscolaLms\Youtube\Dto\YTStreamDto;
@@ -50,7 +51,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 * @param  [type] $data  [array of the event details]
 	 * @return [type]        [response array of broadcast ]
 	 */
-	public function broadcast($token, YTBroadcastDto $ytBroadcastDto): ?YTLiveDto
+	public function broadcast($token, YTBroadcastDto $ytBroadcastDto): ?YTLiveDtoContract
     {
         if (!$ytBroadcastDto->getTitle() || !$ytBroadcastDto->getDescription()) {
             return null;
@@ -307,8 +308,8 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 * @param  [type] $youtubeEventId [eventID]
 	 * @return [type]                   [response array for various process in the update]
 	 */
-	public function updateBroadcast($token, YTBroadcastDto $YTBroadcastDto, $youtubeEventId): ?YTLiveDto
-    {
+	public function updateBroadcast($token, YTBroadcastDto $YTBroadcastDto): ?YTLiveDto
+  {
         /**
          * [setAccessToken [setting accent token to client]]
          */
@@ -371,7 +372,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         $this->googleYoutubeLiveBroadcast->setSnippet($this->googleLiveBroadcastSnippet);
         $this->googleYoutubeLiveBroadcast->setStatus($this->googleLiveBroadcastStatus);
         $this->googleYoutubeLiveBroadcast->setKind('youtube#liveBroadcast');
-        $this->googleYoutubeLiveBroadcast->setId($youtubeEventId);
+        $this->googleYoutubeLiveBroadcast->setId($YTBroadcastDto->getId());
         /**
          * Execute the request [return info about the new broadcast ]
          */
@@ -385,7 +386,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         /**
          * Call the API's videos.list method [retrieve the video resource]
          */
-        $listResponse = $youtube->videos->listVideos("snippet", ['id' => $youtubeEventId]);
+        $listResponse = $youtube->videos->listVideos("snippet", ['id' => $YTBroadcastDto->getId()]);
         $video = $listResponse[0];
         $videoSnippet = $video['snippet'];
         /* @var $videoSnippet VideoSnippet */
@@ -460,7 +461,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 * @param  [type] $youtubeEventId [eventID]
 	 * @return [type]                   [deleteBroadcastsResponse]
 	 */
-	public function deleteEvent($token, $youtubeEventId)
+	public function deleteEvent($token, $youtubeEventId): bool
     {
         /**
          * [setAccessToken [setting accent token to client]]
@@ -475,6 +476,6 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
          */
         $youtube = new \Google_Service_YouTube($this->client);
         $deleteBroadcastsResponse = $youtube->liveBroadcasts->delete($youtubeEventId);
-        return $deleteBroadcastsResponse;
+        return strpos($deleteBroadcastsResponse->getStatusCode(), '20') !== false;
 	}
 }

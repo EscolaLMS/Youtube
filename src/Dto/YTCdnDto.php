@@ -2,9 +2,10 @@
 
 namespace EscolaLms\Youtube\Dto;
 
+use EscolaLms\Youtube\Dto\Contracts\YTCdnDtoContract;
 use Google\Service\YouTube\CdnSettings;
 
-class YTCdnDto
+class YTCdnDto implements YTCdnDtoContract
 {
     private string $streamUrl;
     private string $streamName;

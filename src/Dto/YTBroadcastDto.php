@@ -8,6 +8,7 @@ class YTBroadcastDto
 {
     use DtoHelper;
 
+    private ?string $id;
     private string $title;
     private string $description;
     private string $thumbnailPath;
@@ -26,6 +27,11 @@ class YTBroadcastDto
     public function getTitle(): ?string
     {
         return $this->title ?? null;
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id ?? null;
     }
 
     public function getDescription(): ?string
