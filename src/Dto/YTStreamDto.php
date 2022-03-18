@@ -2,18 +2,24 @@
 
 namespace EscolaLms\Youtube\Dto;
 
+use EscolaLms\Youtube\Dto\Contracts\YTCdnDtoContract;
+use EscolaLms\Youtube\Dto\Contracts\YTStreamDtoContract;
 use Google\Service\YouTube\CdnSettings;
 use Google\Service\YouTube\LiveStream;
 
-class YTStreamDto
+class YTStreamDto implements YTStreamDtoContract
 {
-    private string $id;
-    private YTCdnDto $YTCdnDto;
+    private YTCdnDtoContract $YTCdnDto;
 
     public function __construct(LiveStream $liveStream)
     {
         $this->id = $liveStream->getId();
         $this->setYTCdnDto($liveStream->getCdn());
+    }
+
+    public function getYTCdnDto(): YTCdnDtoContract
+    {
+        return $this->YTCdnDto;
     }
 
     private function setYTCdnDto(CdnSettings $cdnSettings)

@@ -2,19 +2,23 @@
 
 namespace EscolaLms\Youtube\Dto;
 
+use EscolaLms\Youtube\Dto\Contracts\YTLiveDtoContract;
+use EscolaLms\Youtube\Dto\Contracts\YTStreamDtoContract;
 use Google\Service\YouTube\LiveBroadcast;
 
-class YTLiveDto
+class YTLiveDto implements YTLiveDtoContract
 {
     private string $embedHtml;
     private string $ytUrl;
-    private YTStreamDto $YTStreamDto;
+    private string $id;
+    private YTStreamDtoContract $YTStreamDto;
     private YTUpdateResponseDto $YTUpdateResponseDto;
 
     public function __construct(LiveBroadcast $liveBroadcast)
     {
         $this->setEmbedHtml($liveBroadcast->getContentDetails()->getMonitorStream()->getEmbedHtml());
         $this->setYtUrl();
+        $this->setId($liveBroadcast->getId());
     }
 
     public function getYtUrl(): ?string
@@ -27,7 +31,7 @@ class YTLiveDto
         return $this->embedHtml ?? '';
     }
 
-    public function getYTStreamDto(): ?YTStreamDto
+    public function getYTStreamDto(): ?YTStreamDtoContract
     {
         return $this->YTStreamDto ?? null;
     }
@@ -37,7 +41,12 @@ class YTLiveDto
         return $this->YTUpdateResponseDto ?? null;
     }
 
-    public function setYTStreamDto(YTStreamDto $YTStreamDto): void
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    public function setYTStreamDto(YTStreamDtoContract $YTStreamDto): void
     {
         $this->YTStreamDto = $YTStreamDto;
     }
@@ -56,5 +65,10 @@ class YTLiveDto
     private function setEmbedHtml(string $embedHtml): void
     {
         $this->embedHtml = $embedHtml;
+    }
+
+    private function setId(string $id): void
+    {
+        $this->id = $id;
     }
 }
