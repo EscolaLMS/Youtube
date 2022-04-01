@@ -4,7 +4,7 @@
   "type": "package",
   "require": {
     "php": ">=7.4",
-    "laravel/framework": ">=8.0",
+    "laravel/framework": "^8.0|^9.0",
     "escolalms/core": "^1",
     "escolalms/auth": "^0",
     "escolalms/settings": "^0",
