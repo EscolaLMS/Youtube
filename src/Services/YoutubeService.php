@@ -5,7 +5,6 @@ namespace EscolaLms\Youtube\Services;
 use EscolaLms\Settings\Facades\AdministrableConfig;
 use EscolaLms\Youtube\Dto\Contracts\YTLiveDtoContract;
 use EscolaLms\Youtube\Dto\YTBroadcastDto;
-use EscolaLms\Youtube\Dto\YTLiveDto;
 use EscolaLms\Youtube\Services\Contracts\AuthenticateServiceContract;
 use EscolaLms\Youtube\Services\Contracts\LiveStreamServiceContract;
 use EscolaLms\Youtube\Services\Contracts\YoutubeServiceContract;
@@ -25,19 +24,19 @@ class YoutubeService implements YoutubeServiceContract
 
     public function generateYTStream(YTBroadcastDto $YTBroadcastDto): ?YTLiveDtoContract
     {
-        $token = $this->authenticateServiceContract->refreshToken(config('youtube.refresh_token'));
+        $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
         return $this->liveStreamServiceContract->broadcast($token, $YTBroadcastDto);
     }
 
     public function updateYTStream(YTBroadcastDto $YTBroadcastDto): ?YTLiveDtoContract
     {
-        $token = $this->authenticateServiceContract->refreshToken(config('youtube.refresh_token'));
+        $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
         return $this->liveStreamServiceContract->updateBroadcast($token, $YTBroadcastDto);
     }
 
     public function removeYTStream(string $ytId): bool
     {
-        $token = $this->authenticateServiceContract->refreshToken(config('youtube.refresh_token'));
+        $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
         return $this->liveStreamServiceContract->deleteEvent($token, $ytId);
     }
 

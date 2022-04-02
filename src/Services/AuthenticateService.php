@@ -29,7 +29,6 @@ class AuthenticateService extends AuthService implements AuthenticateServiceCont
 		$authResponse['token'] = $token;
         $this->setAccessToken($authResponse['token']);
         $authResponse['channel_details'] = $this->channelDetails();
-        dd('s');
         $authResponse['live_streaming_status'] = $this->liveStreamTest($token) ? 'enabled' : 'disbaled';
 		return $authResponse;
 	}
