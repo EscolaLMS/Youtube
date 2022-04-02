@@ -9,7 +9,6 @@ use EscolaLms\Youtube\Dto\YTLiveDto;
 use EscolaLms\Youtube\Dto\YTStreamDto;
 use EscolaLms\Youtube\Dto\YTUpdateResponseDto;
 use EscolaLms\Youtube\Services\Contracts\LiveStreamServiceContract;
-use Exception;
 use Google\Service\YouTube\VideoSnippet;
 use Google_Service_YouTube_CdnSettings;
 use Google_Service_YouTube_LiveBroadcast;

@@ -51,6 +51,10 @@ class EscolaLmsYoutubeServiceProvider extends ServiceProvider
 
         $this->app->register(EscolaLmsSettingsServiceProvider::class);
         AdministrableConfig::registerConfig('services.youtube.refresh_token', ['nullable', 'string'], false);
+        AdministrableConfig::registerConfig('services.youtube.client_id', ['nullable', 'string'], false);
+        AdministrableConfig::registerConfig('services.youtube.client_secret', ['nullable', 'string'], false);
+        AdministrableConfig::registerConfig('services.youtube.api_key', ['nullable', 'string'], false);
+        AdministrableConfig::registerConfig('services.youtube.redirect_url', ['nullable', 'string'], false);
         Config::set('escola_settings.use_database', true);
     }
 }
