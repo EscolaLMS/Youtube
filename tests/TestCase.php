@@ -7,9 +7,9 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use EscolaLms\Settings\EscolaLmsSettingsServiceProvider;
-use EscolaLms\Auth\Models\User;
 use EscolaLms\Core\Tests\TestCase as CoreTestCase;
 use GuzzleHttp\Psr7\Response;
+use EscolaLms\Core\Models\User;
 
 
 class TestCase extends CoreTestCase

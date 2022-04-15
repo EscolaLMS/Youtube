@@ -12,6 +12,7 @@ use EscolaLms\Youtube\Services\Contracts\LiveStreamServiceContract;
 use Google\Service\YouTube\VideoSnippet;
 use Google_Service_YouTube_CdnSettings;
 use Google_Service_YouTube_LiveBroadcast;
+use Google_Service_YouTube_LiveBroadcastContentDetails;
 use Google_Service_YouTube_LiveBroadcastSnippet;
 use Google_Service_YouTube_LiveBroadcastStatus;
 use Google_Service_YouTube_LiveStream;
@@ -31,6 +32,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	protected Google_Service_YouTube_CdnSettings $googleYoutubeCdnSettings;
 	protected Google_Service_YouTube_LiveStream $googleYoutubeLiveStream;
 	protected Google_Service_YouTube_VideoRecordingDetails $googleYoutubeVideoRecordingDetails;
+	protected Google_Service_YouTube_LiveBroadcastContentDetails $googleYoutubeLiveBroadcastContentDetails;
 
 	public function __construct() {
 		parent::__construct();
@@ -41,6 +43,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 		$this->googleYoutubeCdnSettings = new Google_Service_YouTube_CdnSettings;
 		$this->googleYoutubeLiveStream = new Google_Service_YouTube_LiveStream;
 		$this->googleYoutubeVideoRecordingDetails = new Google_Service_YouTube_VideoRecordingDetails;
+		$this->googleYoutubeLiveBroadcastContentDetails = new Google_Service_YouTube_LiveBroadcastContentDetails;
 
 	}
 
@@ -52,6 +55,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 */
 	public function broadcast($token, YTBroadcastDto $ytBroadcastDto): ?YTLiveDtoContract
     {
+        $ytAutostart = $ytBroadcastDto->getAutostartStatus();
         if (!$ytBroadcastDto->getTitle() || !$ytBroadcastDto->getDescription()) {
             return null;
         }
@@ -109,6 +113,15 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
          * object for the liveBroadcast resource's status ["private, public or unlisted"]
          */
         $this->googleLiveBroadcastStatus->setPrivacyStatus($ytBroadcastDto->getPrivacyStatus());
+
+        $updateArr = [
+            'snippet',
+            'status',
+        ];
+        if (!$ytAutostart) {
+            $ytAutostart = $this->setYtAutostartLive($updateArr);
+        }
+
         /**
          * API Request [inserts the liveBroadcast resource]
          */
@@ -118,7 +131,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         /**
          * Execute Insert LiveBroadcast Resource Api [return an object that contains information about the new broadcast]
          */
-        $broadcastsResponse = $youtube->liveBroadcasts->insert('snippet,status', $this->googleYoutubeLiveBroadcast, []);
+        $broadcastsResponse = $youtube->liveBroadcasts->insert(implode(',', $updateArr), $this->googleYoutubeLiveBroadcast, []);
         $youtubeEventId = $broadcastsResponse['id'];
         /**
          * set thumbnail to the event
@@ -179,6 +192,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
                 'streamId' => $streamsResponse['id'],
             ]);
         $ytLiveDto = new YTLiveDto($bindBroadcastResponse);
+        $ytLiveDto->setYtAutostartStatus($ytAutostart);
         $ytLiveDto->setYTStreamDto($ytStreamDto);
         $ytLiveDto->setYTUpdateResponseDto($ytUpdateResponseDto);
         return $ytLiveDto;
@@ -276,11 +290,8 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
      * @param  [type] $broadcastStatus  [transition state - ["testing", "live", "complete"]]
      * @return [type]                   [transition status]
      */
-	public function transitionEvent($token, $youtubeEventId, $broadcastStatus)
+	public function transitionEvent($token, YTBroadcastDto $YTBroadcastDto, $broadcastStatus)
     {
-        if (!empty($token)) {
-            return false;
-        }
         /**
          * [setAccessToken [setting accent token to client]]
          */
@@ -288,7 +299,6 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         if (!$setAccessToken) {
             return false;
         }
-
         $part = "status, id, snippet";
         /**
          * [$service [instance of Google_Service_YouTube ]]
@@ -296,7 +306,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
          */
         $youtube = new \Google_Service_YouTube($this->client);
         $liveBroadcasts = $youtube->liveBroadcasts;
-        $transition = $liveBroadcasts->transition($broadcastStatus, $youtubeEventId, $part);
+        $transition = $liveBroadcasts->transition($broadcastStatus, $YTBroadcastDto->getId(), $part);
         return $transition;
 	}
 
@@ -309,6 +319,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 */
 	public function updateBroadcast($token, YTBroadcastDto $YTBroadcastDto): ?YTLiveDto
   {
+        $ytAutostart = $YTBroadcastDto->getAutostartStatus();
         /**
          * [setAccessToken [setting accent token to client]]
          */
@@ -361,6 +372,13 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         if ($YTBroadcastDto->getEventStartDateTime()) {
             $this->googleLiveBroadcastSnippet->setScheduledEndTime($enddtIso);
         }
+        $updateArr = [
+            'snippet',
+            'status',
+        ];
+        if (!$ytAutostart) {
+            $ytAutostart = $this->setYtAutostartLive($updateArr);
+        }
         /**
          * Create an object for the liveBroadcast resource's status ["private, public or unlisted".]
          */
@@ -375,7 +393,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         /**
          * Execute the request [return info about the new broadcast ]
          */
-        $youtube->liveBroadcasts->update('snippet,status', $this->googleYoutubeLiveBroadcast, []);
+        $youtube->liveBroadcasts->update(implode(',', $updateArr), $this->googleYoutubeLiveBroadcast, []);
 //			/**
 //			 * set thumbnail
 //			 */
@@ -446,11 +464,12 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
             $updateResponse['id'], 'id,contentDetails',
             [
                 'streamId' => $streamsResponse['id'],
-            ]);
+            ]
+        );
         $YTLiveDto = new YTLiveDto($bindBroadcastResponse);
+        $ytLiveDto->setYtAutostartStatus($ytAutostart);
         $YTLiveDto->setYTStreamDto($ytStreamDto);
         $YTLiveDto->setYTUpdateResponseDto($YTUpdateResponseDto);
-
         return $YTLiveDto;
 	}
 
@@ -477,4 +496,25 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         $deleteBroadcastsResponse = $youtube->liveBroadcasts->delete($youtubeEventId);
         return strpos($deleteBroadcastsResponse->getStatusCode(), '20') !== false;
 	}
+
+    private function setYtAutostartLive(array &$updateArr = []): bool
+    {
+        /**
+         * Set autostart live after start stream in video client example jitsi
+         */
+        $monitor = new \Google_Service_YouTube_MonitorStreamInfo();
+        $monitor->setEnableMonitorStream(true);
+        $monitor->setBroadcastStreamDelayMs('10');
+        $this->googleYoutubeLiveBroadcastContentDetails->setMonitorStream($monitor);
+        $this->googleYoutubeLiveBroadcastContentDetails->setEnableAutoStart(true);
+        $this->googleYoutubeLiveBroadcastContentDetails->setEnableAutoStop(true);
+        $this->googleYoutubeLiveBroadcastContentDetails->setEnableEmbed(false);
+        $this->googleYoutubeLiveBroadcastContentDetails->setEnableDvr(true);
+        $this->googleYoutubeLiveBroadcastContentDetails->setRecordFromStart(true);
+        $this->googleYoutubeLiveBroadcastContentDetails->setEnableContentEncryption(false);
+        $this->googleYoutubeLiveBroadcast->setContentDetails($this->googleYoutubeLiveBroadcastContentDetails);
+        $updateArr[] = 'contentDetails';
+        return true;
+    }
+
 }
