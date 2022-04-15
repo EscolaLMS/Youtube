@@ -17,6 +17,7 @@ class YTBroadcastDto
     private string $timeZone = 'UTC';
     private string $privacyStatus = 'unlisted';
     private string $languageName = 'Polish';
+    private ?bool $autostartStatus = false;
     private array $tagArray = [];
 
     public function __construct(array $data = [])
@@ -74,8 +75,18 @@ class YTBroadcastDto
         return $this->tagArray;
     }
 
+    public function getAutostartStatus(): bool
+    {
+        return $this->autostartStatus ?? false;
+    }
+
     public function setTagArray(array $tags): void
     {
         $this->tagArray = $tags;
+    }
+
+    public function setAutostartStatus(?bool $autostartStatus): void
+    {
+        $this->autostartStatus = $autostartStatus;
     }
 }

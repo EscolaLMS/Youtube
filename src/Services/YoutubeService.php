@@ -40,7 +40,7 @@ class YoutubeService implements YoutubeServiceContract
         return $this->liveStreamServiceContract->deleteEvent($token, $ytId);
     }
 
-    public function setRefreshToken($code): void
+    public function setRefreshToken(string $code): void
     {
         $token = $this->authenticateServiceContract->getToken($code);
         if (isset($token['refresh_token'])) {
@@ -49,6 +49,17 @@ class YoutubeService implements YoutubeServiceContract
             ]);
             AdministrableConfig::storeConfig();
         }
+    }
+
+    /**
+     * @param YTBroadcastDto $YTBroadcastDto
+     * @param string $broadcastStatus "testing" | "live" | "complete"
+     * @return mixed
+     */
+    public function setStatusInLiveStream(YTBroadcastDto $YTBroadcastDto, string $broadcastStatus)
+    {
+        $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
+        return $this->liveStreamServiceContract->transitionEvent($token, $YTBroadcastDto, $broadcastStatus);
     }
 
 }

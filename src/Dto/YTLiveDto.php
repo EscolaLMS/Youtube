@@ -11,6 +11,7 @@ class YTLiveDto implements YTLiveDtoContract
     private string $embedHtml;
     private string $ytUrl;
     private string $id;
+    private ?bool $ytAutostartStatus;
     private YTStreamDtoContract $YTStreamDto;
     private YTUpdateResponseDto $YTUpdateResponseDto;
 
@@ -70,5 +71,15 @@ class YTLiveDto implements YTLiveDtoContract
     private function setId(string $id): void
     {
         $this->id = $id;
+    }
+
+    public function getYtAutostartStatus(): ?bool
+    {
+        return $this->ytAutostartStatus ?? false;
+    }
+
+    public function setYtAutostartStatus(?bool $autostartStatus): void
+    {
+        $this->ytAutostartStatus = $autostartStatus;
     }
 }
