@@ -11,3 +11,4 @@ providers:
   - Spatie\Permission\PermissionServiceProvider
   - EscolaLms\Youtube\EscolaLmsYoutubeServiceProvider
   - EscolaLms\Settings\EscolaLmsSettingsServiceProvider
+  - EscolaLms\Core\EscolaLmsServiceProvider

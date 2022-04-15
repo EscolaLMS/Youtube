@@ -3,6 +3,7 @@
 namespace EscolaLms\Youtube;
 
 use EscolaLms\Settings\EscolaLmsSettingsServiceProvider;
+use EscolaLms\Core\EscolaLmsServiceProvider;
 use EscolaLms\Settings\Facades\AdministrableConfig;
 use EscolaLms\Youtube\Services\AuthenticateService;
 use EscolaLms\Youtube\Services\AuthService;
@@ -50,6 +51,7 @@ class EscolaLmsYoutubeServiceProvider extends ServiceProvider
         );
 
         $this->app->register(EscolaLmsSettingsServiceProvider::class);
+        $this->app->register(EscolaLmsServiceProvider::class);
         AdministrableConfig::registerConfig('services.youtube.refresh_token', ['nullable', 'string'], false);
         AdministrableConfig::registerConfig('services.youtube.client_id', ['nullable', 'string'], false);
         AdministrableConfig::registerConfig('services.youtube.client_secret', ['nullable', 'string'], false);
