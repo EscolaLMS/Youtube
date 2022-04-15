@@ -4,11 +4,11 @@ use EscolaLms\Jitsi\Enum\PackageStatusEnum;
 
 return [
     'app_name'      => env('app_name'),
-    'client_id'     => env('client_id', '497720638739-e1l36q952n6g8qeaoi1f2mou74eh1qr3.apps.googleusercontent.com'),
-    'client_secret' => env('client_secret', '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'),
-    'api_key'       => env('api_key', 'AIzaSyBOFNu1pQMnbYZeuMQmOMHmCZ5FB8brrk0'),
-    'refresh_token' => env('refresh_token', '1//0c0AxlDLhvzo2CgYIARAAGAwSNwF-L9IruSUJT1wI07W30kF84pca3mETwT5OgOJX1bzdcAzkODrOXvaX5qRZ57rt6oywhehkBqI'),
-    'redirect_url'  => env('redirect_url', 'http://localhost/api/refresh-token'),
+    'client_id'     => env('client_id'),
+    'client_secret' => env('client_secret'),
+    'api_key'       => env('api_key'),
+    'refresh_token' => env('refresh_token'),
+    'redirect_url'  => env('redirect_url'),
     'yt_language'   => 	array("Afrikaans" => "af",
         "Azerbaijani" => "az",
         "Indonesian" => "id",
