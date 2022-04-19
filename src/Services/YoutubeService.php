@@ -34,10 +34,10 @@ class YoutubeService implements YoutubeServiceContract
         return $this->liveStreamServiceContract->updateBroadcast($token, $YTBroadcastDto);
     }
 
-    public function removeYTStream(string $ytId): bool
+    public function removeYTStream(YTBroadcastDto $YTBroadcastDto): bool
     {
         $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
-        return $this->liveStreamServiceContract->deleteEvent($token, $ytId);
+        return $this->liveStreamServiceContract->deleteEvent($token, $YTBroadcastDto);
     }
 
     public function setRefreshToken(string $code): void

@@ -290,7 +290,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
      * @param  [type] $broadcastStatus  [transition state - ["testing", "live", "complete"]]
      * @return [type]                   [transition status]
      */
-	public function transitionEvent($token, YTBroadcastDto $YTBroadcastDto, $broadcastStatus)
+	public function transitionEvent($token, YTBroadcastDto $YTBroadcastDto, string $broadcastStatus)
     {
         /**
          * [setAccessToken [setting accent token to client]]
@@ -479,7 +479,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 	 * @param  [type] $youtubeEventId [eventID]
 	 * @return [type]                   [deleteBroadcastsResponse]
 	 */
-	public function deleteEvent($token, $youtubeEventId): bool
+    public function deleteEvent($token, YTBroadcastDto $YTBroadcastDto): bool
     {
         /**
          * [setAccessToken [setting accent token to client]]
@@ -488,14 +488,15 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         if (!$setAccessToken) {
             return false;
         }
+
         /**
          * [$service [instance of Google_Service_YouTube ]]
          * @var [type]
          */
         $youtube = new \Google_Service_YouTube($this->client);
-        $deleteBroadcastsResponse = $youtube->liveBroadcasts->delete($youtubeEventId);
+        $deleteBroadcastsResponse = $youtube->liveBroadcasts->delete($YTBroadcastDto->getId());
         return strpos($deleteBroadcastsResponse->getStatusCode(), '20') !== false;
-	}
+    }
 
     private function setYtAutostartLive(array &$updateArr = []): bool
     {

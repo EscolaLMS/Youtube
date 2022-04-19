@@ -10,4 +10,6 @@ interface LiveStreamServiceContract
 {
     public function broadcast($token, YTBroadcastDto $ytBroadcastDto): ?YTLiveDtoContract;
     public function updateBroadcast($token, YTBroadcastDto $YTBroadcastDto): ?YTLiveDto;
+    public function deleteEvent($token, YTBroadcastDto $YTBroadcastDto): bool;
+    public function transitionEvent($token, YTBroadcastDto $YTBroadcastDto, string $broadcastStatus);
 }
