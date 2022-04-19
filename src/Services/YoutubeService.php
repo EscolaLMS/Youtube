@@ -8,6 +8,7 @@ use EscolaLms\Youtube\Dto\YTBroadcastDto;
 use EscolaLms\Youtube\Services\Contracts\AuthenticateServiceContract;
 use EscolaLms\Youtube\Services\Contracts\LiveStreamServiceContract;
 use EscolaLms\Youtube\Services\Contracts\YoutubeServiceContract;
+use Illuminate\Support\Collection;
 
 class YoutubeService implements YoutubeServiceContract
 {
@@ -60,6 +61,12 @@ class YoutubeService implements YoutubeServiceContract
     {
         $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
         return $this->liveStreamServiceContract->transitionEvent($token, $YTBroadcastDto, $broadcastStatus);
+    }
+
+    public function getYtLiveStream(YTBroadcastDto $YTBroadcastDto): Collection
+    {
+        $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
+        return $this->liveStreamServiceContract->getListLiveStream($token, $YTBroadcastDto);
     }
 
 }
