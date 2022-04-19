@@ -19,10 +19,10 @@ class AuthService implements AuthServiceContract
     {
 		$this->client = new Google_Client;
 
-		$this->client->setClientId(Config::get('youtube.client_id'));
-		$this->client->setClientSecret(Config::get('youtube.client_secret'));
-		$this->client->setDeveloperKey(Config::get('youtube.api_key'));
-		$this->client->setRedirectUri(Config::get('youtube.redirect_url'));
+		$this->client->setClientId(Config::get('services.youtube.client_id'));
+		$this->client->setClientSecret(Config::get('services.youtube.client_secret'));
+		$this->client->setDeveloperKey(Config::get('services.youtube.api_key'));
+		$this->client->setRedirectUri(Config::get('services.youtube.redirect_url'));
 
 		$this->client->setScopes([
 			'https://www.googleapis.com/auth/youtube',
