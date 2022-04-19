@@ -11,5 +11,5 @@ interface YoutubeServiceContract
 
     public function updateYTStream(YTBroadcastDto $YTBroadcastDto): ?YTLiveDtoContract;
 
-    public function removeYTStream(string $ytId): bool;
+    public function removeYTStream(YTBroadcastDto $YTBroadcastDto): bool;
 }
