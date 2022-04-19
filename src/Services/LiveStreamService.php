@@ -18,6 +18,7 @@ use Google_Service_YouTube_LiveBroadcastStatus;
 use Google_Service_YouTube_LiveStream;
 use Google_Service_YouTube_LiveStreamSnippet;
 use Google_Service_YouTube_VideoRecordingDetails;
+use Illuminate\Support\Collection;
 
 /**
  *  Api Service For Youtube Live Events
@@ -496,6 +497,18 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         $youtube = new \Google_Service_YouTube($this->client);
         $deleteBroadcastsResponse = $youtube->liveBroadcasts->delete($YTBroadcastDto->getId());
         return strpos($deleteBroadcastsResponse->getStatusCode(), '20') !== false;
+    }
+
+    public function getListLiveStream($token, YTBroadcastDto $YTBroadcastDto): Collection
+    {
+        $setAccessToken = $this->setAccessToken($token);
+        if (!$setAccessToken) {
+            return false;
+        }
+
+        $youtube = new \Google_Service_YouTube($this->client);
+        $list = $youtube->liveBroadcasts->listLiveBroadcasts('snippet,id', ['id' => '123']);
+        return collect($list->getItems());
     }
 
     private function setYtAutostartLive(array &$updateArr = []): bool
