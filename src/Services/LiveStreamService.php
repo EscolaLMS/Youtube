@@ -468,7 +468,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
             ]
         );
         $YTLiveDto = new YTLiveDto($bindBroadcastResponse);
-        $ytLiveDto->setYtAutostartStatus($ytAutostart);
+        $YTLiveDto->setYtAutostartStatus($ytAutostart);
         $YTLiveDto->setYTStreamDto($ytStreamDto);
         $YTLiveDto->setYTUpdateResponseDto($YTUpdateResponseDto);
         return $YTLiveDto;
@@ -507,7 +507,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         }
 
         $youtube = new \Google_Service_YouTube($this->client);
-        $list = $youtube->liveBroadcasts->listLiveBroadcasts('snippet,id', ['id' => '123']);
+        $list = $youtube->liveBroadcasts->listLiveBroadcasts('snippet,id', ['id' => $YTBroadcastDto->getId()]);
         return collect($list->getItems());
     }
 
