@@ -2,6 +2,7 @@
 
 namespace EscolaLms\Youtube\Services;
 
+use EscolaLms\Youtube\Exceptions\YtAuthenticateException;
 use EscolaLms\Settings\Facades\AdministrableConfig;
 use EscolaLms\Youtube\Dto\Contracts\YTLiveDtoContract;
 use EscolaLms\Youtube\Dto\YTBroadcastDto;
@@ -25,19 +26,31 @@ class YoutubeService implements YoutubeServiceContract
 
     public function generateYTStream(YTBroadcastDto $YTBroadcastDto): ?YTLiveDtoContract
     {
-        $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
+        try {
+            $token = $this->authenticateServiceContract->refreshToken($this->getRefreshToken());
+        } catch (\Exception $exception) {
+            throw new YtAuthenticateException();
+        }
         return $this->liveStreamServiceContract->broadcast($token, $YTBroadcastDto);
     }
 
     public function updateYTStream(YTBroadcastDto $YTBroadcastDto): ?YTLiveDtoContract
     {
-        $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
+        try {
+            $token = $this->authenticateServiceContract->refreshToken($this->getRefreshToken());
+        } catch (\Exception $exception) {
+            throw new YtAuthenticateException();
+        }
         return $this->liveStreamServiceContract->updateBroadcast($token, $YTBroadcastDto);
     }
 
     public function removeYTStream(YTBroadcastDto $YTBroadcastDto): bool
     {
-        $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
+        try {
+            $token = $this->authenticateServiceContract->refreshToken($this->getRefreshToken());
+        } catch (\Exception $exception) {
+            throw new YtAuthenticateException();
+        }
         return $this->liveStreamServiceContract->deleteEvent($token, $YTBroadcastDto);
     }
 
@@ -59,14 +72,31 @@ class YoutubeService implements YoutubeServiceContract
      */
     public function setStatusInLiveStream(YTBroadcastDto $YTBroadcastDto, string $broadcastStatus)
     {
-        $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
+        try {
+            $token = $this->authenticateServiceContract->refreshToken($this->getRefreshToken());
+        } catch (\Exception $exception) {
+            throw new YtAuthenticateException();
+        }
         return $this->liveStreamServiceContract->transitionEvent($token, $YTBroadcastDto, $broadcastStatus);
     }
 
     public function getYtLiveStream(YTBroadcastDto $YTBroadcastDto): Collection
     {
-        $token = $this->authenticateServiceContract->refreshToken(config('services.youtube.refresh_token'));
+        try {
+            $token = $this->authenticateServiceContract->refreshToken($this->getRefreshToken());
+        } catch (\Exception $exception) {
+            throw new YtAuthenticateException();
+        }
         return $this->liveStreamServiceContract->getListLiveStream($token, $YTBroadcastDto);
+    }
+
+    private function getRefreshToken(): string
+    {
+        $refreshToken = config('services.youtube.refresh_token');
+        if (!$refreshToken) {
+            throw new YtAuthenticateException();
+        }
+        return $refreshToken;
     }
 
 }
