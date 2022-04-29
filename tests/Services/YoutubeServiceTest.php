@@ -3,15 +3,13 @@
 namespace EscolaLms\Youtube\Tests\Services;
 
 use EscolaLms\Core\Tests\CreatesUsers;
-use EscolaLms\Youtube\Dto\YTBroadcastDto;
 use EscolaLms\Youtube\Services\Contracts\AuthenticateServiceContract;
 use EscolaLms\Youtube\Services\Contracts\AuthServiceContract;
-use EscolaLms\Youtube\Services\Contracts\LiveStreamServiceContract;
 use EscolaLms\Youtube\Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Testing\Fluent\AssertableJson;
 
-class ServiceTest extends TestCase
+class YoutubeServiceTest extends TestCase
 {
     use CreatesUsers;
     use WithFaker;
