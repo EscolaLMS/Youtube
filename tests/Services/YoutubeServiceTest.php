@@ -11,7 +11,7 @@ use EscolaLms\Youtube\Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Testing\Fluent\AssertableJson;
 
-class ServiceTest extends TestCase
+class YoutubeServiceTest extends TestCase
 {
     use CreatesUsers;
     use WithFaker;
