@@ -6,8 +6,6 @@ use EscolaLms\Core\Tests\CreatesUsers;
 use EscolaLms\Youtube\Dto\YTBroadcastDto;
 use EscolaLms\Youtube\Events\YtProblem;
 use EscolaLms\Youtube\Services\Contracts\AuthenticateServiceContract;
-use EscolaLms\Youtube\Services\Contracts\AuthServiceContract;
-use EscolaLms\Youtube\Services\Contracts\LiveStreamServiceContract;
 use EscolaLms\Youtube\Services\Contracts\YoutubeServiceContract;
 use EscolaLms\Youtube\Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -30,8 +28,8 @@ class YoutubeServiceTest extends TestCase
 
     public function testGenerateYTAuthUrl()
     {
-        $googleClient = $this->mock(AuthServiceContract::class);
-        $googleClient->shouldReceive('getLoginUrl')->once()->andReturn('https://accounts.google.com/o/');
+        $googleClient = $this->mock(YoutubeServiceContract::class);
+        $googleClient->shouldReceive('generateYTAuthUrl')->once()->andReturn('https://accounts.google.com/o/');
 
         $this->response = $this->actingAs($this->user, 'api')->json(
             'POST',
