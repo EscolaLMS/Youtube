@@ -19,4 +19,8 @@ interface YoutubeServiceContract
     public function setStatusInLiveStream(YTBroadcastDto $YTBroadcastDto, string $broadcastStatus);
 
     public function getYtLiveStream(YTBroadcastDto $YTBroadcastDto): Collection;
+
+    public function generateYTAuthUrl(string $email): string;
+
+    public function dispatchYtError(): void;
 }

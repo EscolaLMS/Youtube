@@ -2,6 +2,7 @@
 
 namespace EscolaLms\Youtube\Exceptions;
 
+use EscolaLms\Youtube\Services\Contracts\YoutubeServiceContract;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Throwable;
@@ -12,6 +13,8 @@ class YtAuthenticateException extends Exception
     {
         $message = $message ?: __('Youtube stream if not exists or is not authorize, log in.');
         $code = $code ?: 400;
+        $youtubeServiceContract = app(YoutubeServiceContract::class);
+        $youtubeServiceContract->dispatchYtError();
         parent::__construct($message, $code, $previous);
     }
 

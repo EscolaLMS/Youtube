@@ -4,11 +4,14 @@ namespace EscolaLms\Youtube\Tests\Services;
 
 use EscolaLms\Core\Tests\CreatesUsers;
 use EscolaLms\Youtube\Dto\YTBroadcastDto;
+use EscolaLms\Youtube\Events\YtProblem;
 use EscolaLms\Youtube\Services\Contracts\AuthenticateServiceContract;
 use EscolaLms\Youtube\Services\Contracts\AuthServiceContract;
 use EscolaLms\Youtube\Services\Contracts\LiveStreamServiceContract;
+use EscolaLms\Youtube\Services\Contracts\YoutubeServiceContract;
 use EscolaLms\Youtube\Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Testing\Fluent\AssertableJson;
 
 class YoutubeServiceTest extends TestCase
@@ -54,5 +57,17 @@ class YoutubeServiceTest extends TestCase
         );
         $this->response->assertOk();
         $this->assertTrue(\Config::get('services.youtube.refresh_token') === $token['refresh_token']);
+    }
+
+    public function testVerifyReportYtFail()
+    {
+        Event::fake();
+        \Config::set('services.youtube.email', $this->faker->email);
+        $ytServiceContract = app(YoutubeServiceContract::class);
+        try {
+            $ytServiceContract->generateYTStream(new YTBroadcastDto());
+        } catch (\Exception $ex) {
+        }
+        Event::assertDispatched(YtProblem::class);
     }
 }

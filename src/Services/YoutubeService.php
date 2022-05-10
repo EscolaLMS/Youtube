@@ -2,6 +2,8 @@
 
 namespace EscolaLms\Youtube\Services;
 
+use EscolaLms\Core\Models\User;
+use EscolaLms\Youtube\Events\YtProblem;
 use EscolaLms\Youtube\Exceptions\YtAuthenticateException;
 use EscolaLms\Settings\Facades\AdministrableConfig;
 use EscolaLms\Youtube\Dto\Contracts\YTLiveDtoContract;
@@ -88,6 +90,26 @@ class YoutubeService implements YoutubeServiceContract
             throw new YtAuthenticateException();
         }
         return $this->liveStreamServiceContract->getListLiveStream($token, $YTBroadcastDto);
+    }
+
+    public function generateYTAuthUrl(string $email): string
+    {
+        AdministrableConfig::setConfig([
+            'services.youtube.email' => $email,
+        ]);
+        AdministrableConfig::storeConfig();
+        return $this->authenticateServiceContract->getLoginUrl($email);
+    }
+
+    public function dispatchYtError(): void
+    {
+        $serviceYtMail = config('services.youtube.email');
+        if (!is_null($serviceYtMail)) {
+            $user = new User([
+                'email' => config('services.youtube.email')
+            ]);
+            event(new YtProblem($user));
+        }
     }
 
     private function getRefreshToken(): string
