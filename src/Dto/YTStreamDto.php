@@ -10,6 +10,7 @@ use Google\Service\YouTube\LiveStream;
 class YTStreamDto implements YTStreamDtoContract
 {
     private YTCdnDtoContract $YTCdnDto;
+    private string $id;
 
     public function __construct(LiveStream $liveStream)
     {

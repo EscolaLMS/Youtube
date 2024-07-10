@@ -50,9 +50,9 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 
 	/**
 	 * [broadcast creating the event on youtube]
-	 * @param  [type] $token [auth token for youtube channel]
-	 * @param  [type] $data  [array of the event details]
-	 * @return [type]        [response array of broadcast ]
+	 * @param  string $token [auth token for youtube channel]
+	 * @param  YTBroadcastDto $ytBroadcastDto  [array of the event details]
+	 * @return ?YTLiveDtoContract        [response array of broadcast ]
 	 */
 	public function broadcast($token, YTBroadcastDto $ytBroadcastDto): ?YTLiveDtoContract
     {
@@ -69,7 +69,6 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         }
         /**
          * [$service [instance of Google_Service_YouTube ]]
-         * @var [type]
          */
         $youtube = new \Google_Service_YouTube($this->client);
         $startdt = Carbon::createFromFormat(
@@ -108,6 +107,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         $this->googleLiveBroadcastSnippet->setDescription($ytBroadcastDto->getDescription());
         $this->googleLiveBroadcastSnippet->setScheduledStartTime($startdtIso);
         if ($ytBroadcastDto->getEventEndDateTime()) {
+            // @phpstan-ignore-next-line
             $this->googleLiveBroadcastSnippet->setScheduledEndTime($enddtIso);
         }
         /**
@@ -202,15 +202,13 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
     /**
      * [uploadThumbnail upload thumbnail for the event]
      * @param  string $url     [path to image]
-     * @param  [type] $videoId [eventId]
-     * @return [type]          [thumbnail url]
+     * @param  string $videoId [eventId]
      */
 	public function uploadThumbnail(string $url, $videoId)
     {
 		if ($this->client->getAccessToken()) {
             /**
              * [$service [instance of Google_Service_YouTube ]]
-             * @var [type]
              */
             $youtube = new \Google_Service_YouTube($this->client);
             $imagePath = $url;
@@ -256,7 +254,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 
 	/**
 	 * [updateTags description]
-	 * @param  [type] $videoId   [eventID]
+	 * @param  string $videoId   [eventID]
 	 * @param  array  $tagsArray [array of tags]
 	 */
 	public function updateTags($videoId, $tagsArray = []): void
@@ -264,7 +262,6 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 		if ($this->client->getAccessToken()) {
             /**
              * [$service [instance of Google_Service_YouTube ]]
-             * @var [type]
              */
             $youtube = new \Google_Service_YouTube($this->client);
             $videoId = $videoId;
@@ -286,10 +283,9 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 
     /**
      * [transitionEvent transition the state of event [test, start streaming , stop streaming]]
-     * @param  [type] $token            [auth token for the channel]
-     * @param  [type] $youtubeEventId [eventId]
-     * @param  [type] $broadcastStatus  [transition state - ["testing", "live", "complete"]]
-     * @return [type]                   [transition status]
+     * @param  string $token            [auth token for the channel]
+     * @param  YTBroadcastDto $YTBroadcastDto [eventId]
+     * @param  string $broadcastStatus  [transition state - ["testing", "live", "complete"]]
      */
 	public function transitionEvent($token, YTBroadcastDto $YTBroadcastDto, string $broadcastStatus)
     {
@@ -303,7 +299,6 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         $part = "status, id, snippet";
         /**
          * [$service [instance of Google_Service_YouTube ]]
-         * @var [type]
          */
         $youtube = new \Google_Service_YouTube($this->client);
         $liveBroadcasts = $youtube->liveBroadcasts;
@@ -313,10 +308,9 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 
 	/**
 	 * [updateBroadcast update the already created event on youtunbe channel]
-	 * @param  [type] $token            [channel auth token]
-	 * @param  [type] $data             [event details]
-	 * @param  [type] $youtubeEventId [eventID]
-	 * @return [type]                   [response array for various process in the update]
+	 * @param  string $token            [channel auth token]
+	 * @param  YTBroadcastDto $YTBroadcastDto             [event details]
+	 * @return ?YTLiveDto                   [response array for various process in the update]
 	 */
 	public function updateBroadcast($token, YTBroadcastDto $YTBroadcastDto): ?YTLiveDto
   {
@@ -330,7 +324,6 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         }
         /**
          * [$service [instance of Google_Service_YouTube ]]
-         * @var [type]
          */
         $youtube = new \Google_Service_YouTube($this->client);
         /**
@@ -371,6 +364,7 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
         $this->googleLiveBroadcastSnippet->setDescription($YTBroadcastDto->getDescription());
         $this->googleLiveBroadcastSnippet->setScheduledStartTime($startdtIso);
         if ($YTBroadcastDto->getEventStartDateTime()) {
+            // @phpstan-ignore-next-line
             $this->googleLiveBroadcastSnippet->setScheduledEndTime($enddtIso);
         }
         $updateArr = [
@@ -476,9 +470,9 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 
 	/**
 	 * [deleteEvent delete an event created in youtube]
-	 * @param  [type] $token            [auth token for channel]
-	 * @param  [type] $youtubeEventId [eventID]
-	 * @return [type]                   [deleteBroadcastsResponse]
+	 * @param  string $token            [auth token for channel]
+	 * @param  YTBroadcastDto $YTBroadcastDto [eventID]
+	 * @return bool                   [deleteBroadcastsResponse]
 	 */
     public function deleteEvent($token, YTBroadcastDto $YTBroadcastDto): bool
     {
@@ -492,14 +486,13 @@ class LiveStreamService extends AuthService implements LiveStreamServiceContract
 
         /**
          * [$service [instance of Google_Service_YouTube ]]
-         * @var [type]
          */
         $youtube = new \Google_Service_YouTube($this->client);
         $deleteBroadcastsResponse = $youtube->liveBroadcasts->delete($YTBroadcastDto->getId());
         return strpos($deleteBroadcastsResponse->getStatusCode(), '20') !== false;
     }
 
-    public function getListLiveStream($token, YTBroadcastDto $YTBroadcastDto): Collection
+    public function getListLiveStream($token, YTBroadcastDto $YTBroadcastDto): Collection|false
     {
         $setAccessToken = $this->setAccessToken($token);
         if (!$setAccessToken) {
