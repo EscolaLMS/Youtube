@@ -55,7 +55,6 @@ class AuthenticateService extends AuthService implements AuthenticateServiceCont
 
         /**
          * [$service [instance of Google_Service_YouTube ]]
-         * @var [type]
          */
         $youtube = new \Google_Service_YouTube($this->client);
 

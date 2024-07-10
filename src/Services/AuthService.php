@@ -41,8 +41,7 @@ class AuthService implements AuthServiceContract
 
 	/**
 	 * [getToken -generate token from response code recived on visiting the login url generated]
-	 * @param  [type] $code [code for auth]
-	 * @return [type]       [authorization token]
+	 * @param  string $code [code for auth]
 	 */
 	public function getToken($code): array
     {
@@ -52,9 +51,9 @@ class AuthService implements AuthServiceContract
 
 	/**
 	 * [getLoginUrl - generates the url login url to generate auth token]
-	 * @param  [type] $youtube_email [account to be authenticated]
-	 * @param  [type] $channelId     [return
-	 * @return [type]                [auth url to generate]
+	 * @param  string $youtube_email [account to be authenticated]
+	 * @param  string $channelId     [return
+	 * @return string              [auth url to generate]
 	 */
 	public function getLoginUrl($youtube_email, $channelId = null): string
     {
@@ -68,7 +67,7 @@ class AuthService implements AuthServiceContract
 
 	/**
 	 * [setAccessToken -setting the access token to the client]
-	 * @param [type] $google_token [google auth token]
+	 * @param string $google_token [google auth token]
 	 */
 	public function setAccessToken($google_token = null): bool
     {
@@ -88,7 +87,6 @@ class AuthService implements AuthServiceContract
 	/**
 	 * [createResource creating a resource array and addind properties to it]
 	 * @param  $properties [param properties to be added to channel]
-	 * @return             [resource array]
 	 */
 	public function createResource($properties): array
     {
@@ -142,7 +140,6 @@ class AuthService implements AuthServiceContract
 	/**
 	 * [parseTime - parse the video time in to description format]
 	 * @param  $time [youtube returned time format]
-	 * @return       [string parsed time]
 	 */
 	public function parseTime($time): string
     {
