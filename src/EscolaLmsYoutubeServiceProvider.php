@@ -12,6 +12,7 @@ use EscolaLms\Youtube\Services\Contracts\AuthServiceContract;
 use EscolaLms\Youtube\Services\Contracts\LiveStreamServiceContract;
 use EscolaLms\Youtube\Services\Contracts\YoutubeServiceContract;
 use EscolaLms\Youtube\Services\LiveStreamService;
+use EscolaLms\Youtube\Services\NullYoutubeService;
 use EscolaLms\Youtube\Services\YoutubeService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
@@ -29,7 +30,6 @@ class EscolaLmsYoutubeServiceProvider extends ServiceProvider
         AuthServiceContract::class => AuthService::class,
         AuthenticateServiceContract::class => AuthenticateService::class,
         LiveStreamServiceContract::class => LiveStreamService::class,
-        YoutubeServiceContract::class => YoutubeService::class,
     ];
 
     /**
@@ -58,5 +58,16 @@ class EscolaLmsYoutubeServiceProvider extends ServiceProvider
         AdministrableConfig::registerConfig('services.youtube.api_key', ['nullable', 'string'], false);
         AdministrableConfig::registerConfig('services.youtube.redirect_url', ['nullable', 'string'], false);
         Config::set('escola_settings.use_database', true);
+
+        $this->app->singleton(YoutubeServiceContract::class, function ($app) {
+            $clientId = config('services.youtube.client_id');
+            $clientSecret = config('services.youtube.client_secret');
+
+            if (empty($clientId) || empty($clientSecret)) {
+                return new NullYoutubeService();
+            }
+
+            return new YoutubeService($app->make(AuthenticateServiceContract::class), $app->make(LiveStreamServiceContract::class));
+        });
     }
 }

@@ -112,6 +112,10 @@ class YoutubeService implements YoutubeServiceContract
         }
     }
 
+    public function isConfigured(): bool {
+        return !empty(config('services.youtube.client_id')) && !empty(config('services.youtube.client_secret'));
+    }
+
     private function getRefreshToken(): string
     {
         $refreshToken = config('services.youtube.refresh_token');
