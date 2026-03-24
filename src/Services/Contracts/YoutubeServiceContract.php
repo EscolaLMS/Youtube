@@ -23,4 +23,5 @@ interface YoutubeServiceContract
     public function generateYTAuthUrl(string $email): string;
 
     public function dispatchYtError(): void;
+    public function isConfigured(): bool;
 }
